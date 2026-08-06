@@ -1,0 +1,6 @@
+{
+  "name": "Oja Marketplace",
+  "description": "A modern, trustworthy two-sided marketplace platform connecting service workers with buyers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
