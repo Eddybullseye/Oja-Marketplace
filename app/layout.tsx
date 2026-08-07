@@ -7,16 +7,6 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 export const metadata: Metadata = {
   title: 'Oja Marketplace',
   description: 'A modern, trustworthy two-sided marketplace platform connecting service workers with buyers.',
-  icons: {
-    icon: [
-      { url: '/favicon.ico' },
-      { url: '/icons/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
-      { url: '/icons/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
-    ],
-    apple: [
-      { url: '/icons/apple-touch-icon.png' },
-    ],
-  },
   manifest: '/manifest.json',
 };
 

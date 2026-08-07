@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { WorkerCardSkeleton } from '@/components/WorkerCardSkeleton';
+import PaymentModal from '@/components/PaymentModal';
 import {
   Search,
   MapPin,
@@ -63,6 +64,8 @@ const TOP_WORKERS = [
 
 export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedWorker, setSelectedWorker] = useState<any>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 200);
@@ -175,7 +178,13 @@ export default function HomePage() {
                 <div className="text-sm font-bold text-gray-900">
                   {worker.price}
                 </div>
-                <button className="bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium hover:bg-primary hover:text-white transition-colors">
+                <button 
+                  onClick={() => {
+                    setSelectedWorker(worker);
+                    setIsPaymentModalOpen(true);
+                  }}
+                  className="bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium hover:bg-primary hover:text-white transition-colors"
+                >
                   Book
                 </button>
               </div>
@@ -216,6 +225,17 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <PaymentModal 
+        isOpen={isPaymentModalOpen} 
+        onClose={() => setIsPaymentModalOpen(false)}
+        bookingDetails={selectedWorker ? {
+          serviceName: selectedWorker.category,
+          workerName: selectedWorker.name,
+          amount: parseFloat(selectedWorker.price.replace(/[^0-9.]/g, '')) || 0,
+          fee: 15
+        } : undefined}
+      />
     </div>
   );
 }
