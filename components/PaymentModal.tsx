@@ -16,7 +16,7 @@ interface PaymentModalProps {
 }
 
 export default function PaymentModal({ isOpen, onClose, bookingDetails }: PaymentModalProps) {
-  const [step, setStep] = useState<'initial' | 'processing' | 'success'>('initial');
+  const [step, setStep] = useState<'initial' | 'verifying' | 'holding' | 'success'>('initial');
 
   const defaultDetails = {
     serviceName: 'Home Cleaning',
@@ -29,16 +29,19 @@ export default function PaymentModal({ isOpen, onClose, bookingDetails }: Paymen
   const total = details.amount + details.fee;
 
   const handleConfirm = () => {
-    setStep('processing');
+    setStep('verifying');
     
-    // Simulate processing delay
+    setTimeout(() => {
+      setStep('holding');
+    }, 1500);
+
     setTimeout(() => {
       setStep('success');
-    }, 2500);
+    }, 3000);
   };
 
   const handleClose = () => {
-    if (step !== 'processing') {
+    if (step !== 'verifying' && step !== 'holding') {
       onClose();
       // Reset step after animation completes
       setTimeout(() => setStep('initial'), 300);
@@ -85,11 +88,15 @@ export default function PaymentModal({ isOpen, onClose, bookingDetails }: Paymen
                     <h3 className="font-medium text-zinc-900 dark:text-zinc-100 mb-3">Booking Summary</h3>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-zinc-500 dark:text-zinc-400">{details.serviceName}</span>
-                        <span className="font-medium text-zinc-900 dark:text-zinc-100">${details.amount.toFixed(2)}</span>
+                        <span className="text-zinc-500 dark:text-zinc-400">Service Hourly Rate</span>
+                        <span className="font-medium text-zinc-900 dark:text-zinc-100">${details.amount.toFixed(2)}/hr</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-zinc-500 dark:text-zinc-400">Escrow Service Fee</span>
+                        <span className="text-zinc-500 dark:text-zinc-400">Estimated Duration</span>
+                        <span className="font-medium text-zinc-900 dark:text-zinc-100">1 hour</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-zinc-500 dark:text-zinc-400">Marketplace Platform Fee</span>
                         <span className="font-medium text-zinc-900 dark:text-zinc-100">${details.fee.toFixed(2)}</span>
                       </div>
                       <div className="border-t border-zinc-200 dark:border-zinc-700 pt-2 mt-2 flex justify-between font-bold">
@@ -114,19 +121,24 @@ export default function PaymentModal({ isOpen, onClose, bookingDetails }: Paymen
                     <CreditCard className="w-4 h-4" />
                     Confirm & Hold Funds
                   </button>
+                  <p className="text-xs text-center text-zinc-500 dark:text-zinc-400 mt-4">
+                    Cancel anytime within 24 hours for a full refund of your escrow deposit.
+                  </p>
                 </div>
               )}
 
-              {step === 'processing' && (
+              {(step === 'verifying' || step === 'holding') && (
                 <div className="p-12 flex flex-col items-center text-center">
                   <div className="relative">
                     <div className="w-16 h-16 border-4 border-zinc-100 dark:border-zinc-800 rounded-full"></div>
                     <div className="w-16 h-16 border-4 border-zinc-900 dark:border-white rounded-full border-t-transparent dark:border-t-transparent animate-spin absolute top-0 left-0"></div>
                     <Lock className="w-6 h-6 text-zinc-900 dark:text-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
                   </div>
-                  <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50 mt-6 mb-2">Securing your funds</h3>
+                  <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50 mt-6 mb-2">
+                    {step === 'verifying' ? 'Verifying Details' : 'Holding Escrow'}
+                  </h3>
                   <p className="text-zinc-500 dark:text-zinc-400 text-sm">
-                    Placing payment in Oja Escrow...
+                    {step === 'verifying' ? 'Checking availability and payment method...' : 'Placing payment in Oja Escrow...'}
                   </p>
                 </div>
               )}
@@ -136,12 +148,24 @@ export default function PaymentModal({ isOpen, onClose, bookingDetails }: Paymen
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    transition={{ type: 'spring', bounce: 0.5 }}
-                    className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mb-6"
+                    transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
+                    className="relative w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mb-6"
                   >
-                    <CheckCircle2 className="w-8 h-8" />
+                    <motion.div 
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: [1.2, 1], opacity: 1 }}
+                      transition={{ delay: 0.2, duration: 0.4 }}
+                    >
+                      <CheckCircle2 className="w-10 h-10" />
+                    </motion.div>
+                    <motion.div
+                       className="absolute inset-0 rounded-full border-2 border-emerald-500"
+                       initial={{ scale: 1, opacity: 1 }}
+                       animate={{ scale: 1.5, opacity: 0 }}
+                       transition={{ delay: 0.1, duration: 0.8, repeat: Infinity, repeatDelay: 1 }}
+                    />
                   </motion.div>
-                  <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50 mb-2">Payment Secured!</h3>
+                  <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50 mb-2">Booking Confirmed!</h3>
                   <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-6">
                     Your funds are safely held in escrow. {details.workerName} has been notified to start the job.
                   </p>
