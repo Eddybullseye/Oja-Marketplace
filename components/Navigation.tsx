@@ -3,25 +3,12 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { motion } from 'motion/react';
 import {
   Search,
-  Briefcase,
-  MessageCircle,
-  UserCircle,
-  Home,
   Bell,
   MapPin,
   Menu,
 } from 'lucide-react';
-
-const TABS = [
-  { id: 'home', label: 'Home', icon: Home, path: '/' },
-  { id: 'search', label: 'Search', icon: Search, path: '/search' },
-  { id: 'bookings', label: 'Bookings', icon: Briefcase, path: '/bookings' },
-  { id: 'messages', label: 'Messages', icon: MessageCircle, path: '/messages' },
-  { id: 'profile', label: 'Profile', icon: UserCircle, path: '/profile' },
-];
 
 export const Navigation = React.memo(function Navigation() {
   return (

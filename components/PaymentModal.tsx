@@ -30,14 +30,19 @@ export default function PaymentModal({ isOpen, onClose, bookingDetails }: Paymen
 
   const handleConfirm = () => {
     setStep('verifying');
-    
-    setTimeout(() => {
+
+    const t1 = setTimeout(() => {
       setStep('holding');
     }, 1500);
 
-    setTimeout(() => {
+    const t2 = setTimeout(() => {
       setStep('success');
     }, 3000);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   };
 
   const handleClose = () => {
@@ -47,6 +52,12 @@ export default function PaymentModal({ isOpen, onClose, bookingDetails }: Paymen
       setTimeout(() => setStep('initial'), 300);
     }
   };
+
+  useEffect(() => {
+    if (!isOpen) {
+      setStep('initial');
+    }
+  }, [isOpen]);
 
   return (
     <AnimatePresence>
@@ -76,7 +87,7 @@ export default function PaymentModal({ isOpen, onClose, bookingDetails }: Paymen
                         Oja Escrow Protection
                       </p>
                     </div>
-                    <button 
+                    <button
                       onClick={handleClose}
                       className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
                     >
@@ -109,7 +120,7 @@ export default function PaymentModal({ isOpen, onClose, bookingDetails }: Paymen
                   <div className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 p-4 rounded-xl flex gap-3 mb-6 border border-emerald-100 dark:border-emerald-900/50">
                     <ShieldCheck className="w-5 h-5 shrink-0 mt-0.5" />
                     <p className="text-sm leading-relaxed">
-                      Your payment will be held securely in escrow. 
+                      Your payment will be held securely in escrow.
                       Funds are only released to {details.workerName} after you confirm the job is complete.
                     </p>
                   </div>
@@ -151,7 +162,7 @@ export default function PaymentModal({ isOpen, onClose, bookingDetails }: Paymen
                     transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
                     className="relative w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mb-6"
                   >
-                    <motion.div 
+                    <motion.div
                       initial={{ scale: 0, opacity: 0 }}
                       animate={{ scale: [1.2, 1], opacity: 1 }}
                       transition={{ delay: 0.2, duration: 0.4 }}
@@ -159,10 +170,10 @@ export default function PaymentModal({ isOpen, onClose, bookingDetails }: Paymen
                       <CheckCircle2 className="w-10 h-10" />
                     </motion.div>
                     <motion.div
-                       className="absolute inset-0 rounded-full border-2 border-emerald-500"
-                       initial={{ scale: 1, opacity: 1 }}
-                       animate={{ scale: 1.5, opacity: 0 }}
-                       transition={{ delay: 0.1, duration: 0.8, repeat: Infinity, repeatDelay: 1 }}
+                      className="absolute inset-0 rounded-full border-2 border-emerald-500"
+                      initial={{ scale: 1, opacity: 1 }}
+                      animate={{ scale: 1.5, opacity: 0 }}
+                      transition={{ delay: 0.1, duration: 0.8, repeat: Infinity, repeatDelay: 1 }}
                     />
                   </motion.div>
                   <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50 mb-2">Booking Confirmed!</h3>
@@ -170,7 +181,7 @@ export default function PaymentModal({ isOpen, onClose, bookingDetails }: Paymen
                     Your funds are safely held in escrow. {details.workerName} has been notified to start the job.
                   </p>
                   <button
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white py-3 px-4 rounded-xl font-medium hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
                   >
                     Done
