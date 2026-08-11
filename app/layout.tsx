@@ -15,7 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased min-h-screen transition-colors duration-200 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50">
         <ThemeProvider>
           <Navigation />
-          <div className="pt-16 md:pt-18">
+          <div className="pt-16">
             {children}
           </div>
           <BottomNav />
