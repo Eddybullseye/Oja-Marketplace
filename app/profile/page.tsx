@@ -8,7 +8,8 @@ import {
   FileText, LogOut, ChevronRight, MapPin, Phone, Mail, Shield,
   Wallet, Receipt, Camera, Link, Calendar, FileCheck, AlertTriangle,
   Smartphone, Fingerprint, History, Star, Scale, BookOpen, Cookie,
-  Download, Clock, Search
+  Download, Clock, Search, X, CheckCircle, Check, Key, MessageSquare,
+  FileDown
 } from 'lucide-react';
 
 interface PaymentMethod {
@@ -111,13 +112,85 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState('personal');
 
+  // Toast Notification
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  // Favorite categories selection
+  const [favoriteCategories, setFavoriteCategories] = useState<string[]>([
+    'Home Cleaning', 'Plumbing'
+  ]);
+  const toggleCategory = (cat: string) => {
+    setFavoriteCategories(prev =>
+      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+    );
+  };
+
+  // Active Sessions
+  const [activeSessions, setActiveSessions] = useState([
+    { id: 1, device: 'Chrome on Windows', location: 'Springfield, IL', time: 'Active now', current: true },
+    { id: 2, device: 'Safari on iPhone', location: 'Springfield, IL', time: '2 hours ago', current: false },
+    { id: 3, device: 'Firefox on MacBook', location: 'Chicago, IL', time: '3 days ago', current: false },
+  ]);
+  const handleRevokeSession = (id: number, deviceName: string) => {
+    setActiveSessions(prev => prev.filter(s => s.id !== id));
+    showToast(`Revoked session for ${deviceName}`);
+  };
+
+  // Legal Modal
+  interface LegalDoc {
+    title: string;
+    desc: string;
+    updated: string;
+    sections: { heading: string; body: string }[];
+  }
+  const [activeLegalDoc, setActiveLegalDoc] = useState<LegalDoc | null>(null);
+
+  // Help Modal
+  const [activeHelpType, setActiveHelpType] = useState<'faq' | 'escrow' | 'contact' | null>(null);
+
+  // Support Form
+  const [supportForm, setSupportForm] = useState({ subject: '', message: '', priority: 'normal' });
+
+  // Password Modal
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ current: '', newPass: '', confirm: '' });
+
+  // Deactivate & Delete Modals
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // Download Data function
+  const handleDownloadData = () => {
+    const data = {
+      profile: formData,
+      paymentMethodsCount: paymentMethods.length,
+      notifications,
+      privacy,
+      bookingPrefs,
+      favoriteCategories,
+      exportedAt: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `oja-buyer-account-data-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Your account data has been downloaded successfully!');
+  };
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setTimeout(() => {
       setSaving(false);
-      alert('Profile updated successfully!');
-    }, 1000);
+      showToast('Profile settings updated successfully!');
+    }, 800);
   };
 
   const handleSetDefault = (id: number) => {
@@ -637,11 +710,25 @@ export default function ProfilePage() {
                 <h4 className="text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1 flex items-center gap-1.5"><Star className="w-3.5 h-3.5" /> Favorite Categories</h4>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">Select your most-used service categories for personalized recommendations.</p>
                 <div className="flex flex-wrap gap-2">
-                  {['Home Cleaning', 'Plumbing', 'Electrical', 'Painting', 'Landscaping', 'Moving', 'Handyman', 'HVAC', 'Carpentry', 'Pest Control'].map((cat) => (
-                    <button key={cat} className="px-3 py-1.5 text-xs font-semibold rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-primary hover:text-primary dark:hover:text-teal-400 hover:bg-primary/5 transition-colors">
-                      {cat}
-                    </button>
-                  ))}
+                  {['Home Cleaning', 'Plumbing', 'Electrical', 'Painting', 'Landscaping', 'Moving', 'Handyman', 'HVAC', 'Carpentry', 'Pest Control'].map((cat) => {
+                    const isSelected = favoriteCategories.includes(cat);
+                    return (
+                      <button key={cat} type="button" onClick={() => toggleCategory(cat)}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-full border transition-all flex items-center gap-1.5 ${isSelected
+                          ? 'bg-primary text-white border-primary shadow-sm'
+                          : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-primary hover:text-primary dark:hover:text-teal-400 hover:bg-primary/5'
+                          }`}>
+                        {isSelected && <Check className="w-3 h-3" />}
+                        {cat}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800 flex justify-end">
+                  <button type="button" onClick={() => showToast('Booking preferences saved!')}
+                    className="bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 font-bold py-2 px-4 rounded-xl text-xs hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors flex items-center gap-1.5 shadow-sm">
+                    <Save className="w-3.5 h-3.5" /> Save Preferences
+                  </button>
                 </div>
               </div>
             </div>
@@ -668,7 +755,11 @@ export default function ProfilePage() {
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">{desc}</p>
                       </div>
                     </div>
-                    <button onClick={() => setConnectedAccounts(prev => ({ ...prev, [key]: !prev[key] }))}
+                    <button onClick={() => {
+                      const nextState = !connectedAccounts[key];
+                      setConnectedAccounts(prev => ({ ...prev, [key]: nextState }));
+                      showToast(nextState ? `Connected to ${name} account.` : `Disconnected from ${name}.`);
+                    }}
                       className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${connectedAccounts[key]
                         ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400'
                         : 'border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:border-primary hover:text-primary'}`}>
@@ -712,12 +803,8 @@ export default function ProfilePage() {
                 <h4 className="text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1 flex items-center gap-1.5"><Smartphone className="w-3.5 h-3.5" /> Active Sessions</h4>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">Devices currently signed in to your account.</p>
                 <div className="space-y-3">
-                  {[
-                    { device: 'Chrome on Windows', location: 'Springfield, IL', time: 'Active now', current: true },
-                    { device: 'Safari on iPhone', location: 'Springfield, IL', time: '2 hours ago', current: false },
-                    { device: 'Firefox on MacBook', location: 'Chicago, IL', time: '3 days ago', current: false },
-                  ].map((session, i) => (
-                    <div key={i} className="flex items-center justify-between py-3 px-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                  {activeSessions.map((session) => (
+                    <div key={session.id} className="flex items-center justify-between py-3 px-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800">
                       <div className="flex items-center gap-3">
                         <Smartphone className="w-4 h-4 text-zinc-400" />
                         <div>
@@ -729,7 +816,7 @@ export default function ProfilePage() {
                         </div>
                       </div>
                       {!session.current && (
-                        <button className="text-xs font-semibold text-red-500 hover:text-red-600 transition-colors">Revoke</button>
+                        <button onClick={() => handleRevokeSession(session.id, session.device)} className="text-xs font-semibold text-red-500 hover:text-red-600 transition-colors">Revoke</button>
                       )}
                     </div>
                   ))}
@@ -739,19 +826,19 @@ export default function ProfilePage() {
               <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm">
                 <h4 className="text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-3">Account Actions</h4>
                 <div className="space-y-3">
-                  <button className="w-full flex items-center justify-between py-3 px-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl text-sm font-semibold text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                  <button onClick={() => setShowPasswordModal(true)} className="w-full flex items-center justify-between py-3 px-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl text-sm font-semibold text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
                     <span className="flex items-center gap-2"><Lock className="w-4 h-4 text-zinc-400" /> Change Password</span>
                     <ChevronRight className="w-4 h-4 text-zinc-400" />
                   </button>
-                  <button className="w-full flex items-center justify-between py-3 px-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl text-sm font-semibold text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                  <button onClick={handleDownloadData} className="w-full flex items-center justify-between py-3 px-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl text-sm font-semibold text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
                     <span className="flex items-center gap-2"><Download className="w-4 h-4 text-zinc-400" /> Download My Data</span>
                     <ChevronRight className="w-4 h-4 text-zinc-400" />
                   </button>
-                  <button className="w-full flex items-center justify-between py-3 px-4 bg-amber-50 dark:bg-amber-950/10 rounded-xl text-sm font-semibold text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-950/20 transition-colors">
+                  <button onClick={() => setShowDeactivateModal(true)} className="w-full flex items-center justify-between py-3 px-4 bg-amber-50 dark:bg-amber-950/10 rounded-xl text-sm font-semibold text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-950/20 transition-colors">
                     <span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> Deactivate Account</span>
                     <ChevronRight className="w-4 h-4" />
                   </button>
-                  <button className="w-full flex items-center justify-between py-3 px-4 bg-red-50 dark:bg-red-950/10 rounded-xl text-sm font-semibold text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30 hover:bg-red-100 dark:hover:bg-red-950/20 transition-colors">
+                  <button onClick={() => setShowDeleteModal(true)} className="w-full flex items-center justify-between py-3 px-4 bg-red-50 dark:bg-red-950/10 rounded-xl text-sm font-semibold text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30 hover:bg-red-100 dark:hover:bg-red-950/20 transition-colors">
                     <span className="flex items-center gap-2"><Trash2 className="w-4 h-4" /> Delete Account</span>
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -768,29 +855,32 @@ export default function ProfilePage() {
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-5">Review Oja&apos;s policies, terms, and legal documentation.</p>
                 <div className="space-y-3">
                   {[
-                    { title: 'Terms of Service', desc: 'The terms governing your use of the Oja marketplace platform.', icon: FileText, updated: 'Updated Jul 2026' },
-                    { title: 'Privacy Policy', desc: 'How we collect, use, and protect your personal information.', icon: Lock, updated: 'Updated Jul 2026' },
-                    { title: 'Cookie Policy', desc: 'Information about how Oja uses cookies and tracking technologies.', icon: Cookie, updated: 'Updated Jun 2026' },
-                    { title: 'Escrow & Payment Terms', desc: 'Policies governing escrow payments, refunds, and dispute resolution.', icon: Shield, updated: 'Updated Jul 2026' },
-                    { title: 'Buyer Protection Policy', desc: 'Your rights and protections as a buyer on the Oja marketplace.', icon: ShieldCheck, updated: 'Updated Jul 2026' },
-                    { title: 'Dispute Resolution Policy', desc: 'How disputes between buyers and service providers are handled.', icon: Scale, updated: 'Updated Jun 2026' },
-                    { title: 'Community Guidelines', desc: 'Standards of conduct for all marketplace participants.', icon: BookOpen, updated: 'Updated May 2026' },
-                    { title: 'Acceptable Use Policy', desc: 'Rules about what is and isn\'t allowed on the Oja platform.', icon: FileCheck, updated: 'Updated Jun 2026' },
-                  ].map(({ title, desc, icon: Icon, updated }, i) => (
-                    <button key={i} className="w-full text-left flex items-center justify-between py-3.5 px-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors group">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 dark:text-zinc-400 group-hover:text-primary dark:group-hover:text-teal-400 transition-colors">
-                          <Icon className="w-4 h-4" />
+                    { title: 'Terms of Service', desc: 'The terms governing your use of the Oja marketplace platform.', icon: FileText, updated: 'Updated Jul 2026', sections: [{ heading: '1. User Obligations', body: 'By creating a buyer account on Oja, you agree to respect provider agreements, maintain valid contact information, and execute bookings strictly within platform protocols.' }, { heading: '2. Escrow Protection', body: 'All funds committed for service bookings are safely escrowed by Oja payments. Providers are compensated only upon your verified sign-off.' }] },
+                    { title: 'Privacy Policy', desc: 'How we collect, use, and protect your personal information.', icon: Lock, updated: 'Updated Jul 2026', sections: [{ heading: '1. Information Collection', body: 'We store your contact details, booking notes, and transactional history to optimize marketplace recommendations and security.' }, { heading: '2. Data Confidentiality', body: 'Your personal phone number and exact address are shared with service providers only after a booking is confirmed.' }] },
+                    { title: 'Cookie Policy', desc: 'Information about how Oja uses cookies and tracking technologies.', icon: Cookie, updated: 'Updated Jun 2026', sections: [{ heading: '1. Essential Cookies', body: 'We use authentication cookies to keep you signed in securely across sessions.' }] },
+                    { title: 'Escrow & Payment Terms', desc: 'Policies governing escrow payments, refunds, and dispute resolution.', icon: Shield, updated: 'Updated Jul 2026', sections: [{ heading: '1. Escrow Guarantee', body: 'Funds are securely deposited prior to job commencement and held safely until work completion is confirmed.' }] },
+                    { title: 'Buyer Protection Policy', desc: 'Your rights and protections as a buyer on the Oja marketplace.', icon: ShieldCheck, updated: 'Updated Jul 2026', sections: [{ heading: '1. Satisfaction Guarantee', body: 'If a service provider fails to perform the agreed work, you are entitled to a full refund or free rebooking.' }] },
+                    { title: 'Dispute Resolution Policy', desc: 'How disputes between buyers and service providers are handled.', icon: Scale, updated: 'Updated Jun 2026', sections: [{ heading: '1. Dispute Window', body: 'You have up to 48 hours following job completion to submit a dispute claim via your booking dashboard.' }] },
+                    { title: 'Community Guidelines', desc: 'Standards of conduct for all marketplace participants.', icon: BookOpen, updated: 'Updated May 2026', sections: [{ heading: '1. Mutual Respect', body: 'Harassment, discrimination, or deceptive behavior will lead to immediate account suspension.' }] },
+                    { title: 'Acceptable Use Policy', desc: 'Rules about what is and isn\'t allowed on the Oja platform.', icon: FileCheck, updated: 'Updated Jun 2026', sections: [{ heading: '1. Permitted Use', body: 'Oja may only be used for legitimate service discovery, booking, and professional engagement.' }] },
+                  ].map((doc, i) => {
+                    const Icon = doc.icon;
+                    return (
+                      <button key={i} onClick={() => setActiveLegalDoc(doc)} className="w-full text-left flex items-center justify-between py-3.5 px-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors group">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 dark:text-zinc-400 group-hover:text-primary dark:group-hover:text-teal-400 transition-colors">
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">{doc.title}</p>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{doc.desc}</p>
+                            <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">{doc.updated}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">{title}</p>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{desc}</p>
-                          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">{updated}</p>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:text-primary dark:group-hover:text-teal-400 transition-colors shrink-0" />
-                    </button>
-                  ))}
+                        <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:text-primary dark:group-hover:text-teal-400 transition-colors shrink-0" />
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -813,13 +903,13 @@ export default function ProfilePage() {
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-5">Get help with your account, bookings, or payments.</p>
               <div className="space-y-3">
                 {[
-                  { title: 'FAQ & Knowledge Base', desc: 'Find answers to common questions and troubleshooting guides.', icon: HelpCircle },
-                  { title: 'How Escrow Protection Works', desc: 'Learn how Oja keeps your payments safe during every booking.', icon: ShieldCheck },
-                  { title: 'Contact Support', desc: 'Reach our team via live chat or email for personalized help.', icon: Mail },
-                  { title: 'Terms of Service', desc: 'Review Oja marketplace terms, conditions, and policies.', icon: FileText },
-                  { title: 'Privacy Policy', desc: 'Understand how we handle and protect your personal data.', icon: Lock },
-                ].map(({ title, desc, icon: Icon }, i) => (
-                  <button key={i} className="w-full text-left flex items-center justify-between py-3.5 px-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors group">
+                  { title: 'FAQ & Knowledge Base', desc: 'Find answers to common questions and troubleshooting guides.', icon: HelpCircle, action: () => setActiveHelpType('faq') },
+                  { title: 'How Escrow Protection Works', desc: 'Learn how Oja keeps your payments safe during every booking.', icon: ShieldCheck, action: () => setActiveHelpType('escrow') },
+                  { title: 'Contact Support', desc: 'Reach our team via live chat or email for personalized help.', icon: Mail, action: () => setActiveHelpType('contact') },
+                  { title: 'Terms of Service', desc: 'Review Oja marketplace terms, conditions, and policies.', icon: FileText, action: () => setActiveSection('legal') },
+                  { title: 'Privacy Policy', desc: 'Understand how we handle and protect your personal data.', icon: Lock, action: () => setActiveSection('legal') },
+                ].map(({ title, desc, icon: Icon, action }, i) => (
+                  <button key={i} onClick={action} className="w-full text-left flex items-center justify-between py-3.5 px-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors group">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 dark:text-zinc-400 group-hover:text-primary dark:group-hover:text-teal-400 transition-colors">
                         <Icon className="w-4.5 h-4.5" />
@@ -837,6 +927,197 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
+
+      {/* ==================== TOAST NOTIFICATION ==================== */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 py-3 px-4 rounded-xl shadow-xl flex items-center gap-3 text-sm font-semibold border border-zinc-800 dark:border-zinc-200 animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <CheckCircle className="w-4 h-4 text-emerald-400 dark:text-emerald-600 shrink-0" />
+          <span>{toastMessage}</span>
+          <button onClick={() => setToastMessage(null)} className="ml-2 text-zinc-400 hover:text-white dark:hover:text-zinc-900">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* ==================== LEGAL DOCUMENT MODAL ==================== */}
+      {activeLegalDoc && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950">
+              <div>
+                <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-50">{activeLegalDoc.title}</h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">{activeLegalDoc.updated}</p>
+              </div>
+              <button onClick={() => setActiveLegalDoc(null)} className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto space-y-6 text-sm text-zinc-700 dark:text-zinc-300">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-950 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800">{activeLegalDoc.desc}</p>
+              {activeLegalDoc.sections.map((sec, idx) => (
+                <div key={idx} className="space-y-2">
+                  <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm">{sec.heading}</h4>
+                  <p className="leading-relaxed text-xs text-zinc-600 dark:text-zinc-400">{sec.body}</p>
+                </div>
+              ))}
+            </div>
+            <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950">
+              <button onClick={() => showToast(`Downloaded copy of ${activeLegalDoc.title}`)} className="text-xs font-semibold text-primary dark:text-teal-400 flex items-center gap-1.5 hover:underline">
+                <Download className="w-3.5 h-3.5" /> Download PDF Copy
+              </button>
+              <button onClick={() => setActiveLegalDoc(null)} className="px-4 py-2 bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 font-bold text-xs rounded-xl hover:opacity-90 transition-opacity">
+                Close Document
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== HELP & SUPPORT MODAL ==================== */}
+      {activeHelpType && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-4">
+              <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+                {activeHelpType === 'faq' && <><HelpCircle className="w-5 h-5 text-primary" /> FAQ & Knowledge Base</>}
+                {activeHelpType === 'escrow' && <><ShieldCheck className="w-5 h-5 text-emerald-500" /> How Escrow Protection Works</>}
+                {activeHelpType === 'contact' && <><Mail className="w-5 h-5 text-blue-500" /> Contact Oja Support</>}
+              </h3>
+              <button onClick={() => setActiveHelpType(null)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {activeHelpType === 'faq' && (
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto text-xs">
+                {[
+                  { q: 'How do I pay a service provider safely?', a: 'All payments on Oja go into our secure Escrow system. Funds are released to the provider only after you review and approve the completed job.' },
+                  { q: 'What if a service provider does not show up?', a: 'If a provider misses a scheduled appointment without notice, you can cancel instantly for a 100% full refund with zero cancellation fees.' },
+                  { q: 'How do disputes work?', a: 'You have 48 hours after job completion to open a dispute. Our dedicated resolution team steps in to review evidence and guarantee fair resolution.' },
+                ].map((item, i) => (
+                  <div key={i} className="p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl space-y-1.5">
+                    <p className="font-bold text-zinc-900 dark:text-zinc-100 text-sm">{item.q}</p>
+                    <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">{item.a}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {activeHelpType === 'escrow' && (
+              <div className="space-y-4 text-xs">
+                <p className="text-zinc-600 dark:text-zinc-400">Oja Escrow guarantees your payment remains 100% safe at every step of the transaction.</p>
+                <div className="space-y-3">
+                  {[
+                    { step: '1. Book & Deposit', desc: 'When you book a provider, your payment is placed securely into an escrow account.' },
+                    { step: '2. Service Execution', desc: 'The provider performs the requested service according to your agreed requirements.' },
+                    { step: '3. Inspect & Release', desc: 'You inspect the work and click "Release Payment" to pay the provider.' },
+                  ].map((s, i) => (
+                    <div key={i} className="flex gap-3 p-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0">{i + 1}</div>
+                      <div>
+                        <p className="font-bold text-zinc-900 dark:text-zinc-100">{s.step}</p>
+                        <p className="text-zinc-500 mt-0.5">{s.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeHelpType === 'contact' && (
+              <form onSubmit={(e) => { e.preventDefault(); setActiveHelpType(null); showToast('Support ticket submitted! We will email you shortly.'); }} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-bold text-zinc-500 dark:text-zinc-400 mb-1">Subject</label>
+                  <input required value={supportForm.subject} onChange={(e) => setSupportForm(prev => ({ ...prev, subject: e.target.value }))}
+                    placeholder="Brief summary of your issue..." className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 px-3 text-xs outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-zinc-500 dark:text-zinc-400 mb-1">Message Details</label>
+                  <textarea required rows={4} value={supportForm.message} onChange={(e) => setSupportForm(prev => ({ ...prev, message: e.target.value }))}
+                    placeholder="Describe your issue or question in detail..." className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 px-3 text-xs outline-none" />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button type="button" onClick={() => setActiveHelpType(null)} className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold">Cancel</button>
+                  <button type="submit" className="px-4 py-2 bg-primary text-white font-bold text-xs rounded-xl hover:opacity-90">Submit Ticket</button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ==================== CHANGE PASSWORD MODAL ==================== */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+              <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-50 flex items-center gap-2"><Lock className="w-5 h-5 text-primary" /> Change Password</h3>
+              <button onClick={() => setShowPasswordModal(false)} className="text-zinc-400 hover:text-zinc-600"><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (passwordForm.newPass !== passwordForm.confirm) { alert('New passwords do not match!'); return; }
+              setShowPasswordModal(false);
+              setPasswordForm({ current: '', newPass: '', confirm: '' });
+              showToast('Password changed successfully!');
+            }} className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-zinc-500 dark:text-zinc-400 mb-1">Current Password</label>
+                <input type="password" required value={passwordForm.current} onChange={(e) => setPasswordForm(prev => ({ ...prev, current: e.target.value }))}
+                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 px-3 text-xs outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-zinc-500 dark:text-zinc-400 mb-1">New Password</label>
+                <input type="password" required minLength={8} value={passwordForm.newPass} onChange={(e) => setPasswordForm(prev => ({ ...prev, newPass: e.target.value }))}
+                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 px-3 text-xs outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-zinc-500 dark:text-zinc-400 mb-1">Confirm New Password</label>
+                <input type="password" required minLength={8} value={passwordForm.confirm} onChange={(e) => setPasswordForm(prev => ({ ...prev, confirm: e.target.value }))}
+                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 px-3 text-xs outline-none" />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setShowPasswordModal(false)} className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold">Cancel</button>
+                <button type="submit" className="px-4 py-2 bg-primary text-white font-bold text-xs rounded-xl hover:opacity-90">Update Password</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== DEACTIVATE MODAL ==================== */}
+      {showDeactivateModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-amber-600 dark:text-amber-400">
+              <AlertTriangle className="w-6 h-6 shrink-0" />
+              <h3 className="font-bold text-lg">Deactivate Buyer Account?</h3>
+            </div>
+            <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">Deactivating your account will temporarily disable your profile and pause active notifications. You can reactivate anytime by logging back in.</p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button onClick={() => setShowDeactivateModal(false)} className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold">Cancel</button>
+              <button onClick={() => { setShowDeactivateModal(false); showToast('Account deactivated.'); }} className="px-4 py-2 bg-amber-600 text-white font-bold text-xs rounded-xl hover:bg-amber-700">Deactivate Account</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== DELETE MODAL ==================== */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
+              <Trash2 className="w-6 h-6 shrink-0" />
+              <h3 className="font-bold text-lg">Permanently Delete Account?</h3>
+            </div>
+            <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">This action cannot be undone. All your saved payment methods, booking preferences, and history will be permanently deleted.</p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button onClick={() => setShowDeleteModal(false)} className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold">Cancel</button>
+              <button onClick={() => { setShowDeleteModal(false); showToast('Account deletion request submitted.'); }} className="px-4 py-2 bg-red-600 text-white font-bold text-xs rounded-xl hover:bg-red-700">Delete Account</button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
