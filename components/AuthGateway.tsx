@@ -27,8 +27,8 @@ interface AuthGatewayProps {
 export default function AuthGateway({ onAuthSuccess, isGatewayMode = false }: AuthGatewayProps) {
     const router = useRouter();
 
-    // Mode: 'signin' | 'signup' | 'forgot' | 'verify-otp' | 'reset-password' | 'success'
-    const [authMode, setAuthMode] = useState<'signin' | 'signup' | 'forgot' | 'verify-otp' | 'reset-password' | 'success'>('signin');
+    // Mode: 'signin' | 'signup' | 'forgot' | 'verify-otp' | 'reset-password' | 'success' | 'verify-email'
+    const [authMode, setAuthMode] = useState<'signin' | 'signup' | 'forgot' | 'verify-otp' | 'reset-password' | 'success' | 'verify-email'>('signin');
     const [role, setRole] = useState<'buyer' | 'provider'>('buyer');
 
     // Form States
@@ -80,14 +80,7 @@ export default function AuthGateway({ onAuthSuccess, isGatewayMode = false }: Au
         setLoading(true);
         setTimeout(() => {
             setLoading(false);
-            triggerToast(`Account created successfully as ${role === 'buyer' ? 'Buyer' : 'Service Provider'}! Accessing website...`);
-            setTimeout(() => {
-                if (onAuthSuccess) {
-                    onAuthSuccess({ email: email || 'new.user@example.com', name: fullName || 'New User', role }, rememberMe);
-                } else {
-                    router.push('/');
-                }
-            }, 800);
+            setAuthMode('verify-email');
         }, 800);
     };
 
@@ -467,6 +460,42 @@ export default function AuthGateway({ onAuthSuccess, isGatewayMode = false }: Au
                                     Sign in here
                                 </button>
                             </div>
+                        </div>
+                    )}
+
+                    {/* ==================== VERIFY EMAIL VIEW ==================== */}
+                    {authMode === 'verify-email' && (
+                        <div className="text-center py-4 space-y-4">
+                            <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto shadow-inner">
+                                <Mail className="w-8 h-8" />
+                            </div>
+                            <h2 className="text-2xl font-black text-zinc-900 dark:text-white">Check Your Email App</h2>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                We've sent a confirmation link to <span className="font-bold text-zinc-900 dark:text-white">{email || 'your email'}</span>.
+                                Please check your inbox and click the link to activate your account.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    triggerToast('Resent confirmation link to your email!');
+                                }}
+                                className="w-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 font-bold py-3.5 px-4 rounded-xl text-xs hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95"
+                            >
+                                Resend Link
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (onAuthSuccess) {
+                                        onAuthSuccess({ email: email || 'new.user@example.com', name: fullName || 'New User', role }, rememberMe);
+                                    } else {
+                                        router.push('/');
+                                    }
+                                }}
+                                className="w-full bg-primary hover:bg-teal-600 text-white font-bold py-3.5 px-4 rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 mt-4"
+                            >
+                                Simulate Email Link Clicked
+                            </button>
                         </div>
                     )}
 
