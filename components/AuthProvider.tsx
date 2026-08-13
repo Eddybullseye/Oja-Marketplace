@@ -1,7 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import SignInPage from '@/app/signin/page';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import AuthGateway from '@/components/AuthGateway';
 
 interface User {
     email: string;
@@ -10,97 +10,94 @@ interface User {
 }
 
 interface AuthContextType {
-    isAuthenticated: boolean;
     user: User | null;
+    isAuthenticated: boolean;
     login: (userData: User, rememberMe: boolean) => void;
     logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType>({
-    isAuthenticated: false,
-    user: null,
-    login: () => { },
-    logout: () => { },
-});
-
-export const useAuth = () => useContext(AuthContext);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [user, setUser] = useState<User | null>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [isMounted, setIsMounted] = useState<boolean>(false);
 
     useEffect(() => {
-        // Check local storage for persistent authentication (Remember Me)
-        const storedAuth = localStorage.getItem('oja_auth');
-        const sessionAuth = sessionStorage.getItem('oja_auth');
-
-        if (storedAuth) {
+        setIsMounted(true);
+        // Check for persistent session (localStorage) or session-only (sessionStorage)
+        const storedUser = localStorage.getItem('oja_auth_user') || sessionStorage.getItem('oja_auth_user');
+        if (storedUser) {
             try {
-                const parsed = JSON.parse(storedAuth);
-                setUser(parsed);
+                const parsedUser = JSON.parse(storedUser);
+                setUser(parsedUser);
                 setIsAuthenticated(true);
-                return;
-            } catch (e) {
-                localStorage.removeItem('oja_auth');
+            } catch (err) {
+                console.error('Failed to parse auth session:', err);
+                localStorage.removeItem('oja_auth_user');
+                sessionStorage.removeItem('oja_auth_user');
             }
         }
-
-        if (sessionAuth) {
-            try {
-                const parsed = JSON.parse(sessionAuth);
-                setUser(parsed);
-                setIsAuthenticated(true);
-                return;
-            } catch (e) {
-                sessionStorage.removeItem('oja_auth');
-            }
-        }
-
-        // Default to unauthenticated if no stored session found
-        setIsAuthenticated(false);
+        setIsLoading(false);
     }, []);
 
     const login = (userData: User, rememberMe: boolean) => {
         setUser(userData);
         setIsAuthenticated(true);
+
+        const serialized = JSON.stringify(userData);
         if (rememberMe) {
-            localStorage.setItem('oja_auth', JSON.stringify(userData));
-            sessionStorage.removeItem('oja_auth');
+            localStorage.setItem('oja_auth_user', serialized);
+            sessionStorage.removeItem('oja_auth_user');
         } else {
-            sessionStorage.setItem('oja_auth', JSON.stringify(userData));
-            localStorage.removeItem('oja_auth');
+            sessionStorage.setItem('oja_auth_user', serialized);
+            localStorage.removeItem('oja_auth_user');
         }
     };
 
     const logout = () => {
         setUser(null);
         setIsAuthenticated(false);
-        localStorage.removeItem('oja_auth');
-        sessionStorage.removeItem('oja_auth');
+        localStorage.removeItem('oja_auth_user');
+        sessionStorage.removeItem('oja_auth_user');
     };
 
-    // Show loading spinner while checking auth status
-    if (isAuthenticated === null) {
+    // Render loading state during initial hydration check
+    if (!isMounted || isLoading) {
         return (
-            <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center animate-pulse">
-                        <span className="text-white font-black text-2xl leading-none">O</span>
-                    </div>
-                    <p className="text-xs font-bold text-zinc-400">Loading Oja Marketplace...</p>
+            <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col items-center justify-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center animate-bounce shadow-lg">
+                    <span className="text-white font-black text-xl leading-none">O</span>
                 </div>
+                <div className="text-xs font-bold uppercase tracking-widest text-zinc-400">Loading Oja Marketplace...</div>
             </div>
         );
     }
 
-    // If NOT authenticated, force the Sign In Gateway before rendering any main app layout
+    // Mandatory Authentication Gateway: block access to app if not logged in
     if (!isAuthenticated) {
-        return <SignInPage onAuthSuccess={login} isGatewayMode={true} />;
+        return (
+            <AuthGateway
+                isGatewayMode={true}
+                onAuthSuccess={(userData, rememberMe) => {
+                    login(userData, rememberMe);
+                }}
+            />
+        );
     }
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+        <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
             {children}
         </AuthContext.Provider>
     );
+}
+
+export function useAuth() {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
 }

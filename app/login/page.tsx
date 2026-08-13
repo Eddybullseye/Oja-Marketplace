@@ -1,5 +1,7 @@
-import SignInPage from '../signin/page';
+'use client';
+
+import AuthGateway from '@/components/AuthGateway';
 
 export default function LoginPage() {
-    return <SignInPage />;
+    return <AuthGateway isGatewayMode={false} />;
 }
