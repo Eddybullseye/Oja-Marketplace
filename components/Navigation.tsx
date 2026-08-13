@@ -3,15 +3,18 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/components/AuthProvider';
 import {
   Search,
   Bell,
   MapPin,
   Menu,
+  LogOut,
 } from 'lucide-react';
 
 export const Navigation = React.memo(function Navigation() {
   const pathname = usePathname();
+  const { logout, user } = useAuth();
 
   return (
     <>
@@ -79,15 +82,6 @@ export const Navigation = React.memo(function Navigation() {
           >
             Messages
           </Link>
-          <Link
-            href="/signin"
-            className={`text-sm font-semibold transition-colors ${pathname === '/signin' || pathname === '/login'
-              ? 'text-primary dark:text-teal-400 font-bold'
-              : 'text-gray-700 dark:text-zinc-300 hover:text-primary dark:hover:text-teal-400'
-              }`}
-          >
-            Sign In
-          </Link>
           <button className="bg-accent hover:bg-orange-500 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-all shadow-sm hover:shadow active:scale-95">
             Post a Job
           </button>
@@ -102,15 +96,23 @@ export const Navigation = React.memo(function Navigation() {
                 ? 'border-primary dark:border-teal-400'
                 : 'border-transparent hover:border-primary dark:hover:border-teal-400'
                 }`}
+              title={user?.name || 'Profile'}
             >
               <img src="https://picsum.photos/seed/avatar1/100/100" alt="Avatar" className="w-full h-full object-cover" />
             </Link>
+            <button
+              onClick={() => logout()}
+              className="text-gray-500 hover:text-red-500 dark:text-zinc-400 dark:hover:text-red-400 transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </nav>
-      </header >
+      </header>
 
       {/* Mobile Header */}
-      < header className="md:hidden fixed top-0 w-full z-50 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border-b border-gray-100 dark:border-zinc-800 h-16 flex items-center px-4 justify-between" >
+      <header className="md:hidden fixed top-0 w-full z-50 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border-b border-gray-100 dark:border-zinc-800 h-16 flex items-center px-4 justify-between">
         <Menu className="w-6 h-6 text-gray-700 dark:text-zinc-350" />
         <Link href="/" className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center">
@@ -121,7 +123,7 @@ export const Navigation = React.memo(function Navigation() {
         <div className="w-8 flex justify-end">
           <Search className="w-5 h-5 text-gray-700 dark:text-zinc-350" />
         </div>
-      </header >
+      </header>
     </>
   );
 });

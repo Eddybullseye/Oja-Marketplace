@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
+import { useAuth } from '@/components/AuthProvider';
 import {
   User, ShieldCheck, CreditCard, Bell, Moon, Sun, Monitor, Save,
   Landmark, Plus, Trash2, Eye, EyeOff, Lock, Globe, HelpCircle,
@@ -24,6 +25,7 @@ interface PaymentMethod {
 
 export default function ProfilePage() {
   const { theme, setTheme } = useTheme();
+  const { logout } = useAuth();
 
   // Personal info
   const [formData, setFormData] = useState({
@@ -305,7 +307,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <button onClick={() => showToast('Signed out of buyer session.')} className="p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl border border-red-100 dark:border-red-900/30 transition-colors shrink-0" title="Sign Out">
+            <button onClick={() => logout()} className="p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl border border-red-100 dark:border-red-900/30 transition-colors shrink-0" title="Sign Out">
               <LogOut className="w-4 h-4" />
             </button>
           </div>

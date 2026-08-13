@@ -20,7 +20,12 @@ import {
     Check,
 } from 'lucide-react';
 
-export default function SignInPage() {
+interface SignInPageProps {
+    onAuthSuccess?: (userData: { email: string; name?: string; role: 'buyer' | 'provider' }, rememberMe: boolean) => void;
+    isGatewayMode?: boolean;
+}
+
+export default function SignInPage({ onAuthSuccess, isGatewayMode = false }: SignInPageProps) {
     const router = useRouter();
 
     // Mode: 'signin' | 'signup' | 'forgot' | 'verify-otp' | 'reset-password' | 'success'
@@ -61,9 +66,13 @@ export default function SignInPage() {
             setLoading(false);
             triggerToast(`Welcome back! Signed in as ${role === 'buyer' ? 'Buyer' : 'Service Provider'}.`);
             setTimeout(() => {
-                router.push('/profile');
-            }, 1000);
-        }, 900);
+                if (onAuthSuccess) {
+                    onAuthSuccess({ email: email || 'alex.johnson@example.com', name: email.split('@')[0] || 'Alex', role }, rememberMe);
+                } else {
+                    router.push('/');
+                }
+            }, 800);
+        }, 800);
     };
 
     // Handle Sign Up Submit
@@ -72,11 +81,15 @@ export default function SignInPage() {
         setLoading(true);
         setTimeout(() => {
             setLoading(false);
-            triggerToast(`Account created successfully as ${role === 'buyer' ? 'Buyer' : 'Service Provider'}! Redirecting...`);
+            triggerToast(`Account created successfully as ${role === 'buyer' ? 'Buyer' : 'Service Provider'}! Accessing website...`);
             setTimeout(() => {
-                router.push('/profile');
-            }, 1000);
-        }, 900);
+                if (onAuthSuccess) {
+                    onAuthSuccess({ email: email || 'new.user@example.com', name: fullName || 'New User', role }, rememberMe);
+                } else {
+                    router.push('/');
+                }
+            }, 800);
+        }, 800);
     };
 
     // Handle Send Reset Code
@@ -121,8 +134,12 @@ export default function SignInPage() {
     const handleSocialLogin = (provider: string) => {
         triggerToast(`Signing in with ${provider}...`);
         setTimeout(() => {
-            router.push('/profile');
-        }, 1200);
+            if (onAuthSuccess) {
+                onAuthSuccess({ email: `${provider.toLowerCase()}user@oja.com`, name: `${provider} User`, role: 'buyer' }, rememberMe);
+            } else {
+                router.push('/');
+            }
+        }, 800);
     };
 
     return (
@@ -133,18 +150,24 @@ export default function SignInPage() {
 
             {/* Header Logo */}
             <div className="max-w-md w-full mx-auto flex items-center justify-between z-10">
-                <Link href="/" className="flex items-center gap-2 group">
-                    <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                <div className="flex items-center gap-2 group cursor-default">
+                    <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-md">
                         <span className="text-white font-black text-xl leading-none">O</span>
                     </div>
                     <div className="flex flex-col">
                         <span className="text-2xl font-black tracking-tight text-zinc-900 dark:text-white">Oja</span>
                         <span className="text-[10px] uppercase font-bold text-zinc-400 -mt-1 tracking-widest">Marketplace</span>
                     </div>
-                </Link>
-                <Link href="/" className="text-xs font-bold text-zinc-500 dark:text-zinc-400 hover:text-primary transition-colors flex items-center gap-1">
-                    <ArrowLeft className="w-3.5 h-3.5" /> Back to Home
-                </Link>
+                </div>
+                {!isGatewayMode ? (
+                    <Link href="/" className="text-xs font-bold text-zinc-500 dark:text-zinc-400 hover:text-primary transition-colors flex items-center gap-1">
+                        <ArrowLeft className="w-3.5 h-3.5" /> Back to Home
+                    </Link>
+                ) : (
+                    <div className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-900 px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> Secure Gateway
+                    </div>
+                )}
             </div>
 
             {/* Toast Notification */}

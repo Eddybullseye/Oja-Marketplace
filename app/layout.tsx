@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { AuthProvider } from '@/components/AuthProvider';
 import { Navigation } from '@/components/Navigation';
 import { BottomNav } from '@/components/BottomNav';
 import './globals.css';
@@ -14,11 +15,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="antialiased min-h-screen transition-colors duration-200 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50">
         <ThemeProvider>
-          <Navigation />
-          <div className="pt-16">
-            {children}
-          </div>
-          <BottomNav />
+          <AuthProvider>
+            <Navigation />
+            <div className="pt-16">
+              {children}
+            </div>
+            <BottomNav />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
