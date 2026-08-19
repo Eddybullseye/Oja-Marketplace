@@ -65,6 +65,12 @@ export default function AuthGateway({ onAuthSuccess, isGatewayMode = false }: Au
             setLoading(false);
             triggerToast(`Welcome back! Signed in as ${role === 'buyer' ? 'Buyer' : 'Service Provider'}.`);
             setTimeout(() => {
+                if (role === 'provider') {
+                    const workerUrl = process.env.NEXT_PUBLIC_WORKER_PORTAL_URL || 'http://localhost:3002';
+                    window.location.href = workerUrl;
+                    return;
+                }
+
                 if (onAuthSuccess) {
                     onAuthSuccess({ email: email || 'alex.johnson@example.com', name: email.split('@')[0] || 'Alex', role }, rememberMe);
                 } else {
@@ -126,6 +132,12 @@ export default function AuthGateway({ onAuthSuccess, isGatewayMode = false }: Au
     const handleSocialLogin = (provider: string) => {
         triggerToast(`Signing in with ${provider}...`);
         setTimeout(() => {
+            if (role === 'provider') {
+                const workerUrl = process.env.NEXT_PUBLIC_WORKER_PORTAL_URL || 'http://localhost:3002';
+                window.location.href = workerUrl;
+                return;
+            }
+
             if (onAuthSuccess) {
                 onAuthSuccess({ email: `${provider.toLowerCase()}user@oja.com`, name: `${provider} User`, role: 'buyer' }, rememberMe);
             } else {
