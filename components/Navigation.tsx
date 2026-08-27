@@ -48,6 +48,7 @@ export const Navigation = React.memo(function Navigation() {
         <nav className="flex items-center gap-6">
           <Link
             href="/"
+            id="tour-buyer-home-desktop"
             className={`text-sm font-medium transition-colors ${pathname === '/'
               ? 'text-primary dark:text-teal-400 font-bold'
               : 'text-gray-600 dark:text-zinc-400 hover:text-primary dark:hover:text-teal-400'
@@ -57,6 +58,7 @@ export const Navigation = React.memo(function Navigation() {
           </Link>
           <Link
             href="/search"
+            id="tour-buyer-search-desktop"
             className={`text-sm font-medium transition-colors ${pathname === '/search'
               ? 'text-primary dark:text-teal-400 font-bold'
               : 'text-gray-600 dark:text-zinc-400 hover:text-primary dark:hover:text-teal-400'
@@ -66,6 +68,7 @@ export const Navigation = React.memo(function Navigation() {
           </Link>
           <Link
             href="/bookings"
+            id="tour-buyer-bookings-desktop"
             className={`text-sm font-medium transition-colors ${pathname === '/bookings'
               ? 'text-primary dark:text-teal-400 font-bold'
               : 'text-gray-600 dark:text-zinc-400 hover:text-primary dark:hover:text-teal-400'
@@ -75,6 +78,7 @@ export const Navigation = React.memo(function Navigation() {
           </Link>
           <Link
             href="/messages"
+            id="tour-buyer-messages-desktop"
             className={`text-sm font-medium transition-colors ${pathname === '/messages'
               ? 'text-primary dark:text-teal-400 font-bold'
               : 'text-gray-600 dark:text-zinc-400 hover:text-primary dark:hover:text-teal-400'
@@ -82,7 +86,7 @@ export const Navigation = React.memo(function Navigation() {
           >
             Messages
           </Link>
-          <button className="bg-accent hover:bg-orange-500 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-all shadow-sm hover:shadow active:scale-95">
+          <button id="tour-buyer-post-job-desktop" className="bg-accent hover:bg-orange-500 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-all shadow-sm hover:shadow active:scale-95">
             Post a Job
           </button>
           <div className="flex items-center gap-4 border-l border-gray-200 dark:border-zinc-800 pl-6 ml-2">
@@ -92,6 +96,7 @@ export const Navigation = React.memo(function Navigation() {
             </button>
             <Link
               href="/profile"
+              id="tour-buyer-profile-desktop"
               className={`w-9 h-9 rounded-full bg-gray-200 overflow-hidden cursor-pointer border-2 transition-colors ${pathname === '/profile'
                 ? 'border-primary dark:border-teal-400'
                 : 'border-transparent hover:border-primary dark:hover:border-teal-400'

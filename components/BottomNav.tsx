@@ -32,15 +32,15 @@ export const BottomNav = React.memo(function BottomNav() {
         <Link
           key={tab.id}
           href={tab.path}
+          id={`tour-buyer-${tab.id}`}
           className="relative flex flex-col items-center justify-center w-16 h-full"
         >
           <div className="relative z-10 flex flex-col items-center gap-1 mt-1">
             <div className="relative flex items-center justify-center w-10 h-10">
               <Icon
                 strokeWidth={isActive ? 2.5 : 2}
-                className={`w-6 h-6 z-10 transition-colors duration-200 ${
-                  isActive ? 'text-primary' : 'text-gray-400'
-                }`}
+                className={`w-6 h-6 z-10 transition-colors duration-200 ${isActive ? 'text-primary' : 'text-gray-400'
+                  }`}
               />
               {isActive && (
                 <motion.div
@@ -56,9 +56,8 @@ export const BottomNav = React.memo(function BottomNav() {
               )}
             </div>
             <span
-              className={`text-[10px] font-medium transition-colors duration-200 ${
-                isActive ? 'text-primary' : 'text-gray-400'
-              }`}
+              className={`text-[10px] font-medium transition-colors duration-200 ${isActive ? 'text-primary' : 'text-gray-400'
+                }`}
             >
               {tab.label}
             </span>

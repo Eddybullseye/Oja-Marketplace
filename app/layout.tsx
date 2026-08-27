@@ -3,6 +3,7 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 import { AuthProvider } from '@/components/AuthProvider';
 import { Navigation } from '@/components/Navigation';
 import { BottomNav } from '@/components/BottomNav';
+import { OnboardingTour } from '@/components/OnboardingTour';
 import { ServiceWorkerRegistrar } from '@/components/ServiceWorkerRegistrar';
 import { PwaInstallPrompt } from '@/components/PwaInstallPrompt';
 import './globals.css';
@@ -52,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               {children}
             </div>
             <BottomNav />
+            <OnboardingTour />
             <ServiceWorkerRegistrar />
             <PwaInstallPrompt />
           </AuthProvider>
