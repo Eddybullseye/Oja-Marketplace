@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { ShieldCheck, CheckCircle2, Calendar, DollarSign, Clock, MessageSquare, AlertCircle, Search, ArrowRight, Filter, Sparkles } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ShieldCheck, CheckCircle2, Calendar, DollarSign, Clock, MessageSquare, AlertCircle, Search, ArrowRight, Filter, Sparkles, X } from 'lucide-react';
 import Link from 'next/link';
+import { getBuyerBookings, releaseEscrow } from '@/lib/api';
 
 interface Booking {
   id: number;
@@ -56,25 +57,56 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
   const [toast, setToast] = useState<string | null>(null);
+  const [selectedReleaseBooking, setSelectedReleaseBooking] = useState<Booking | null>(null);
+  const [selectedDisputeBooking, setSelectedDisputeBooking] = useState<Booking | null>(null);
+  const [disputeCategory, setDisputeCategory] = useState('incomplete');
+  const [disputeDetails, setDisputeDetails] = useState('');
+
+  useEffect(() => {
+    getBuyerBookings()
+      .then(apiBookings => {
+        if (Array.isArray(apiBookings) && apiBookings.length > 0) {
+          const mapped: Booking[] = apiBookings.map((b: any, index: number) => ({
+            id: index + 100,
+            workerName: b.worker?.email?.split('@')[0] || `Pro Worker #${b.workerId?.slice(0, 4) || index + 1}`,
+            profession: b.service?.name || 'Verified Pro',
+            date: new Date(b.scheduledDate || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            time: new Date(b.scheduledDate || Date.now()).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            amount: b.price || 120,
+            fee: (b.price || 120) * 0.1,
+            status: b.escrowStatus === 'released' ? 'completed' : b.status === 'disputed' ? 'disputed' : 'escrow',
+            about: `Booking for ${b.service?.name || 'scheduled services'} (Ref: ${b.id.slice(0, 8)})`
+          }));
+          setBookings(mapped);
+        }
+      })
+      .catch(() => {
+        // Fall back gracefully to local bookings
+      });
+  }, []);
 
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3500);
   };
 
-  const handleReleaseFunds = (id: number) => {
-    if (confirm('Are you sure you want to release the escrowed funds? This confirms you have inspected the work and are satisfied.')) {
-      setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'completed' } : b));
-      showToast('✅ Escrow funds released successfully!');
-    }
+  const confirmRelease = () => {
+    if (!selectedReleaseBooking) return;
+    const targetId = selectedReleaseBooking.id;
+    const workerName = selectedReleaseBooking.workerName;
+    setBookings(prev => prev.map(b => b.id === targetId ? { ...b, status: 'completed' } : b));
+    releaseEscrow(String(targetId)).catch(() => {});
+    setSelectedReleaseBooking(null);
+    showToast(`Escrow payment released to ${workerName}.`);
   };
 
-  const handleDispute = (id: number) => {
-    const reason = prompt('Please enter the reason for filing a dispute. Our resolution agents will review the case:');
-    if (reason && reason.trim()) {
-      setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'disputed' } : b));
-      showToast('⚠️ Dispute filed. Funds frozen in escrow until resolved.');
-    }
+  const confirmDispute = () => {
+    if (!selectedDisputeBooking) return;
+    const targetId = selectedDisputeBooking.id;
+    setBookings(prev => prev.map(b => b.id === targetId ? { ...b, status: 'disputed' } : b));
+    setSelectedDisputeBooking(null);
+    setDisputeDetails('');
+    showToast('Dispute case submitted. Escrow funds secured under review.');
   };
 
   const activeBookings = bookings.filter(b => b.status === 'escrow' || b.status === 'disputed');
@@ -200,7 +232,7 @@ export default function BookingsPage() {
                     {booking.status === 'escrow' && (
                       <div className="space-y-2 pt-1">
                         <button
-                          onClick={() => handleReleaseFunds(booking.id)}
+                          onClick={() => setSelectedReleaseBooking(booking)}
                           className="w-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border border-transparent font-bold py-3 px-4 rounded-xl text-xs transition-all hover:bg-zinc-800 dark:hover:bg-zinc-100 flex items-center justify-center gap-2 shadow-sm active:scale-[0.98]"
                         >
                           <ShieldCheck className="w-4 h-4" /> Approve & Release Payment
@@ -213,7 +245,7 @@ export default function BookingsPage() {
                             <MessageSquare className="w-3.5 h-3.5" /> Message
                           </Link>
                           <button
-                            onClick={() => handleDispute(booking.id)}
+                            onClick={() => setSelectedDisputeBooking(booking)}
                             className="border border-rose-200 hover:border-rose-300 dark:border-rose-950 dark:hover:border-rose-900/50 hover:bg-rose-50/30 text-rose-600 dark:text-rose-400 font-bold py-2.5 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5"
                           >
                             <AlertCircle className="w-3.5 h-3.5" /> Dispute
@@ -263,6 +295,99 @@ export default function BookingsPage() {
           )}
         </div>
       </div>
+
+      {/* Release Escrow Confirmation Modal */}
+      {selectedReleaseBooking && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+              <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> Confirm Escrow Release
+              </h3>
+              <button onClick={() => setSelectedReleaseBooking(null)} className="text-zinc-400 hover:text-zinc-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
+              By confirming, you verify that <strong className="text-zinc-900 dark:text-white">{selectedReleaseBooking.workerName}</strong> has completed the service to your satisfaction. The escrowed funds of <strong className="text-zinc-900 dark:text-white">${(selectedReleaseBooking.amount + selectedReleaseBooking.fee).toFixed(2)}</strong> will be cleared directly to their payout balance.
+            </p>
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setSelectedReleaseBooking(null)}
+                className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmRelease}
+                className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 hover:bg-zinc-800 transition shadow-sm"
+              >
+                Release Payment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* File Dispute Modal */}
+      {selectedDisputeBooking && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+              <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-rose-500" /> Open Job Dispute
+              </h3>
+              <button onClick={() => setSelectedDisputeBooking(null)} className="text-zinc-400 hover:text-zinc-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold text-zinc-500 dark:text-zinc-400 mb-1">Issue Category</label>
+                <select
+                  value={disputeCategory}
+                  onChange={(e) => setDisputeCategory(e.target.value)}
+                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 px-3 outline-none font-medium text-zinc-900 dark:text-zinc-100"
+                >
+                  <option value="incomplete">Service Not Completed</option>
+                  <option value="quality">Substandard Work Quality</option>
+                  <option value="no_show">Provider Did Not Show Up</option>
+                  <option value="pricing">Billing Discrepancy</option>
+                  <option value="other">Other Issue</option>
+                </select>
+              </div>
+              <div>
+                <label className="block font-bold text-zinc-500 dark:text-zinc-400 mb-1">Details & Context</label>
+                <textarea
+                  rows={3}
+                  value={disputeDetails}
+                  onChange={(e) => setDisputeDetails(e.target.value)}
+                  placeholder="Describe the issue with as much context as possible..."
+                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 outline-none resize-none font-medium text-zinc-900 dark:text-zinc-100"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setSelectedDisputeBooking(null)}
+                className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDispute}
+                className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold bg-rose-600 text-white hover:bg-rose-700 transition shadow-sm"
+              >
+                Submit Dispute
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

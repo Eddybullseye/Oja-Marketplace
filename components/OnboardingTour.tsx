@@ -19,37 +19,37 @@ export function OnboardingTour() {
     const tourSteps: Step[] = [
         {
             selectors: [],
-            title: "Welcome to Oja Marketplace!",
-            desc: "Ready to find verified local help? Let's take a quick 1-minute tour to find your way around.",
+            title: "Welcome to Oja",
+            desc: "Discover verified local professionals in your area. Here is a quick overview of how to find help, book services, and manage your projects.",
         },
         {
             selectors: ["#tour-buyer-search-desktop", "#tour-buyer-search"],
             targetName: "Search Professionals",
-            title: "Find Verified Local Pros",
-            desc: "Search, filter, and compare top service providers in cleaning, maintenance, tutorial, beauty, events, and more based on reviews and distance.",
+            title: "Browse Verified Providers",
+            desc: "Search, filter, and compare top-rated service professionals in cleaning, plumbing, electrical, carpentry, events, and more based on verified reviews and pricing.",
         },
         {
             selectors: ["#tour-buyer-bookings-desktop", "#tour-buyer-bookings"],
             targetName: "Manage Hired Bookings",
-            title: "Escrow Protected Bookings",
-            desc: "Track active jobs, fund your milestones upfront into Oja's secure escrow vault, and release payments only after verifying the work is complete.",
+            title: "Escrow-Protected Bookings",
+            desc: "Track scheduled work in real time. Payment is held securely in escrow upfront and is only released after you confirm the job is completed to your satisfaction.",
         },
         {
             selectors: ["#tour-buyer-messages-desktop", "#tour-buyer-messages"],
             targetName: "Direct Messages",
-            title: "Real-time Coordinator",
-            desc: "Chat text messages, share files/photos, detail expectations, and establish final price agreements before booking starts.",
+            title: "Direct Client Messaging",
+            desc: "Chat directly with providers to discuss project details, share photos, and agree on quotes before confirming a booking.",
         },
         {
             selectors: ["#tour-buyer-post-job-desktop", "#tour-buyer-profile-desktop", "#tour-buyer-profile"],
             targetName: "Post custom task",
-            title: "Post custom tasks",
-            desc: "Post a custom job request to invite offers directly, register payment methods, and manage your buyer setting preferences.",
+            title: "Custom Requests & Account",
+            desc: "Post a specific task to receive quotes from nearby specialists, manage payment methods, and configure your profile settings.",
         },
         {
             selectors: [],
-            title: "All set!",
-            desc: "You are fully equipped to find trusted professionals. Let's find your first helper!",
+            title: "You're all set",
+            desc: "You are ready to explore the marketplace and hire trusted local professionals.",
         }
     ];
 

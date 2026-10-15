@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { authLogin, authRegister, authForgotPassword } from '@/lib/api';
 import {
     Mail,
     Lock,
@@ -58,48 +59,91 @@ export default function AuthGateway({ onAuthSuccess, isGatewayMode = false }: Au
     };
 
     // Handle Sign In Submit
-    const handleSignIn = (e: React.FormEvent) => {
+    const handleSignIn = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!email || !password) {
+            triggerToast('Please enter your email and password.');
+            return;
+        }
         setLoading(true);
-        setTimeout(() => {
-            setLoading(false);
-            triggerToast(`Welcome back! Signed in as ${role === 'buyer' ? 'Buyer' : 'Service Provider'}.`);
-            setTimeout(() => {
-                if (role === 'provider') {
-                    const workerUrl = process.env.NEXT_PUBLIC_WORKER_PORTAL_URL || 'http://localhost:3002';
-                    window.location.href = workerUrl;
-                    return;
-                }
+        try {
+            const res = await authLogin(email, password);
+            localStorage.setItem('oja_access_token', res.accessToken);
+            const userRole = res.user.role === 'worker' ? 'provider' : 'buyer';
+            const userData = {
+                email: res.user.email,
+                name: res.user.name || res.user.email.split('@')[0],
+                role: userRole as 'buyer' | 'provider',
+            };
+            localStorage.setItem('oja_auth_user', JSON.stringify(userData));
+            triggerToast(`Welcome back! Signed in as ${userRole === 'buyer' ? 'Buyer' : 'Service Provider'}.`);
 
-                if (onAuthSuccess) {
-                    onAuthSuccess({ email: email || 'alex.johnson@example.com', name: email.split('@')[0] || 'Alex', role }, rememberMe);
-                } else {
-                    router.push('/');
-                }
-            }, 800);
-        }, 800);
+            if (res.user.role === 'worker') {
+                const workerUrl = process.env.NEXT_PUBLIC_WORKER_PORTAL_URL || 'http://localhost:3002';
+                window.location.href = workerUrl;
+                return;
+            }
+
+            if (onAuthSuccess) {
+                onAuthSuccess(userData, rememberMe);
+            } else {
+                router.push('/');
+            }
+        } catch (err: any) {
+            triggerToast(`❌ ${err.message || 'Sign in failed. Please check credentials.'}`);
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Handle Sign Up Submit
-    const handleSignUp = (e: React.FormEvent) => {
+    const handleSignUp = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!fullName || !email || !signupPassword) {
+            triggerToast('Please fill in all required fields.');
+            return;
+        }
         setLoading(true);
-        setTimeout(() => {
-            setLoading(false);
+        try {
+            const res = await authRegister(email, signupPassword, fullName);
+            localStorage.setItem('oja_access_token', res.accessToken);
+            const userRole = role === 'provider' ? 'provider' : 'buyer';
+            const userData = {
+                email: res.user.email,
+                name: fullName,
+                role: userRole as 'buyer' | 'provider',
+            };
+            localStorage.setItem('oja_auth_user', JSON.stringify(userData));
+            triggerToast('Account created successfully!');
+
+            if (role === 'provider') {
+                const workerUrl = process.env.NEXT_PUBLIC_WORKER_PORTAL_URL || 'http://localhost:3002';
+                window.location.href = `${workerUrl}/onboarding`;
+                return;
+            }
+
             setAuthMode('verify-email');
-        }, 800);
+        } catch (err: any) {
+            triggerToast(`❌ ${err.message || 'Registration failed. Email may already be in use.'}`);
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Handle Send Reset Code
-    const handleSendResetCode = (e: React.FormEvent) => {
+    const handleSendResetCode = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!resetEmail) return;
         setLoading(true);
-        setTimeout(() => {
-            setLoading(false);
+        try {
+            await authForgotPassword(resetEmail);
             setAuthMode('verify-otp');
             triggerToast(`Verification code sent to ${resetEmail}`);
-        }, 800);
+        } catch (err: any) {
+            triggerToast(`❌ ${err.message || 'Failed to send reset code.'}`);
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Handle Verify OTP
@@ -117,7 +161,7 @@ export default function AuthGateway({ onAuthSuccess, isGatewayMode = false }: Au
     const handlePasswordResetSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (newPassword !== confirmNewPassword) {
-            alert('Passwords do not match');
+            triggerToast('Passwords do not match. Please re-enter and try again.');
             return;
         }
         setLoading(true);

@@ -66,7 +66,7 @@ export default function ProfilePage() {
   const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { alert('Image must be under 5MB.'); return; }
+      if (file.size > 5 * 1024 * 1024) { showToast('Image must be under 5MB.'); return; }
       const reader = new FileReader();
       reader.onloadend = () => setProfileImage(reader.result as string);
       reader.readAsDataURL(file);
@@ -202,12 +202,11 @@ export default function ProfilePage() {
   const handleRemovePayment = (id: number) => {
     const method = paymentMethods.find(pm => pm.id === id);
     if (method?.isDefault) {
-      alert('Cannot remove default payment method. Set another method as default first.');
+      showToast('Cannot remove default payment method. Set another method as default first.');
       return;
     }
-    if (confirm('Remove this payment method?')) {
-      setPaymentMethods(prev => prev.filter(pm => pm.id !== id));
-    }
+    setPaymentMethods(prev => prev.filter(pm => pm.id !== id));
+    showToast('Payment method removed.');
   };
 
   const handleAddPayment = (e: React.FormEvent) => {
@@ -216,7 +215,7 @@ export default function ProfilePage() {
 
     if (newPayment.type === 'card') {
       if (!newPayment.cardNumber || !newPayment.expiry || !newPayment.cvv || !newPayment.nameOnCard) {
-        alert('Please fill all card fields.');
+        showToast('Please fill all card fields.');
         return;
       }
       setPaymentMethods(prev => [...prev, {
@@ -229,7 +228,7 @@ export default function ProfilePage() {
       }]);
     } else {
       if (!newPayment.bankName || !newPayment.routingNumber || !newPayment.accountNumber || !newPayment.accountName) {
-        alert('Please fill all bank account fields.');
+        showToast('Please fill all bank account fields.');
         return;
       }
       setPaymentMethods(prev => [...prev, {
@@ -1061,7 +1060,7 @@ export default function ProfilePage() {
               </div>
               <form onSubmit={(e) => {
                 e.preventDefault();
-                if (passwordForm.newPass !== passwordForm.confirm) { alert('New passwords do not match!'); return; }
+                if (passwordForm.newPass !== passwordForm.confirm) { showToast('New passwords do not match.'); return; }
                 setShowPasswordModal(false);
                 setPasswordForm({ current: '', newPass: '', confirm: '' });
                 showToast('Password changed successfully!');

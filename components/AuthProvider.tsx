@@ -61,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsAuthenticated(false);
         localStorage.removeItem('oja_auth_user');
         sessionStorage.removeItem('oja_auth_user');
+        localStorage.removeItem('oja_access_token');
     };
 
     // Render loading state during initial hydration check
